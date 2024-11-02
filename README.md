@@ -20,3 +20,26 @@
 - Data Exploration
 - Results of classification
 - Conclusion
+
+# Requirements:
+python 3.12.0
+pip-24.3.1
+
+## Set up environment
+
+WINDOWS CMD:
+<!-- build venv -->
+python -m venv venv\ 
+<!-- activate env -->
+venv\Scripts\activate.bat
+<!-- loading requirements(packages needed for project) -->
+python -m pip install -r requirements.txt
+<!-- update requirements -->
+python -m pip freeze > requirements.txt 
+<!-- deactive -->
+venv\Scripts\deactivate.bat
+
+**Remember:**
+Remember to load venv for jupyter
+
+[How to set up environment for other OS's] (https://realpython.com/python-virtual-environments-a-primer/)
