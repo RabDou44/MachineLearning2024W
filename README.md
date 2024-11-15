@@ -14,6 +14,10 @@
 - SVM (SVC): 1h
 - KNeighbours: 1h
 - Evaluation => contingency table / plotting (measures/statistics): 3h
+For binary classification:
+"accuracy","f1-score","precision","recall"
+For multi-classification:
+"accuracy","f1-weighted","precision-weighted","recall-weighted"
 
 ## Report:
 - Methodology
