@@ -90,3 +90,64 @@ def evaluate_models(data, feature_structure, classifiers):
         results[str(clf) + "_cv"] = cv_results
     
     return results
+
+
+def perform_holdout(X, y, clf, random_state=42):
+    """
+    Builds a model using the pipeline and returns it
+    with split data and specified parameters 
+
+    Parameters
+    -----------
+    X: pandas DataFrame
+        The data to use for training and testing the model.
+    y: pandas Series
+        The target variable.
+    clf: sklearn classifier
+        The classifier to use in the pipeline.
+    random_state: int
+        The random state to use for the train-test split.
+
+    
+    Keyword arguments:
+    argument -- description
+    Return: return a tuple of performance metrics and the model
+    """
+
+    model_holdout = clf
+    trainX, testX, trainY, testY = train_test_split(X, y, test_size=0.2, random_state=random_state)
+    start_time = time.time()
+    model_holdout.fit( trainX, trainY)
+    end_time = time.time()
+    pred_y  = model_holdout.predict(testX)
+
+    results = [accuracy_score(testY, pred_y),  
+             precision_score(testY, pred_y, average="weighted"), 
+            recall_score(testY, pred_y,average="weighted"), 
+            f1_score(testY, pred_y, average="weighted"), end_time - start_time] 
+
+    return (results, model_holdout)
+
+def perform_cv(X, y, clf):
+    """
+    Builds a model using the pipeline and returns it
+    with split data and specified parameters 
+
+    Parameters
+    -----------
+    X: pandas DataFrame
+        The data to use for training and testing the model.
+    y: pandas Series
+        The target variable.
+    clf: sklearn classifier
+        The classifier to use in the pipeline.
+    
+    Keyword arguments:
+    argument -- description
+    Return: return a tuple of performance metrics and the model
+    """
+
+    model_cv = clf
+    cv_results = cross_validate(model_cv, X, y, cv=5, scoring=["accuracy", "precision_weighted", "recall_weighted", "f1_weighted"], verbose=1)
+    
+    return cv_results
