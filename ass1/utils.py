@@ -195,3 +195,46 @@ def perform_cv(X, y, clf):
     best_estimator = cv_results["estimator"][np.argmax(cv_results["test_accuracy"])]
 
     return (res, best_estimator) 
+
+
+import re
+
+def beautify_name(name):
+    if name.startswith("SVC"):
+        match = re.search(r'kernel=\'([a-zA-Z0-9_]+)\'', name)
+        return f"SVC {match.group(1)}" if match else "SVC rbf"
+    if name.startswith("KNeighbors"):
+        match = re.search(r'n_neighbors=(\d+)', name)
+        return f"k={match.group(1)}" if match else "k=5"
+    return f"depth={re.search(r'max_depth=(\d+)', name).group(1)}"
+            
+def results_to_latex(results, caption, label):
+    holdout, cv = results.iloc[::2, :], results.iloc[1::2, :]
+    data = {}
+    for i in range(0, 2*len(holdout), 2):
+        instance_name = beautify_name(holdout.at[i, "model"])
+        
+        for col in holdout.columns[1:]:
+            if col + " holdout" not in data:
+                data[col + " holdout"] = {}
+                data[col + " cv"] = {}
+            data[col + " holdout"][instance_name] = holdout.at[i, col]
+            data[col + " cv"][instance_name] = cv.at[i+1, col]
+            
+    df = pd.DataFrame(data)
+    columns = []
+    for col in df.columns:
+        split = col.split(" ")
+        config, metric = split[0], split[1]
+        columns.append((config, metric))
+
+    df.columns = pd.MultiIndex.from_tuples(columns, names=['Splitting', 'Metric'])
+    latex = df.to_latex(float_format="%.3f")
+    latex = latex.replace("lrrrrrrrrrr", "|l|rr|rr|rr|rr|rr|")
+    latex = latex.replace("{r}", "{c|}")
+    latex = latex.replace("Splitting", "")
+    latex = latex.replace("Metric", "Parameters")
+    latex = latex.replace("midrule", "hline")
+    latex = "\\begin{table}[H]\n\\centering\n\\resizebox{0.8\\textwidth}{!}{\n" + latex + "}\n\\caption{" + caption + "}\n\\label{tab:" + label + "}\n\\end{table}"
+
+    return latex
