@@ -1,0 +1,9 @@
+Description Breast Cancer:
+SVC with linear kernel, seed 42, ovo decision function shape and probability=True (rest default)
+normalization with sklearn StandardScalar (z-score), categorical with OneHotEncoder. training using cross validation
+python v3.12, scikit-learn v1.5.2, Windows 10
+
+Description Loan:
+DecisionTree, seed 42, max depth=9 (rest default)
+normalization with sklearn StandardScalar (z-score), categorical with OneHotEncoder. training using cross validation
+python v3.12, scikit-learn v1.5.2, Windows 10
