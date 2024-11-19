@@ -1,3 +1,4 @@
+from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -22,8 +23,17 @@ def get_pipeline(feature_structure, clf = RandomForestClassifier()):
         A dictionary containing the feature structure of the data. The keys are 'bin', 'cat', 'cont', 'ord', and 'target'.
     clf: sklearn classifier
         The classifier to use in the pipeline.
-    TODO: write  check for feature_structure` and `clf` types
     """
+    if not isinstance(feature_structure, dict):
+        raise TypeError("feature_structure should be a dictionary")
+
+    required_keys = {'bin', 'cat', 'cont', 'ord', 'target'}
+    if not required_keys.issubset(feature_structure.keys()):
+        raise ValueError(f"feature_structure must contain the keys: {required_keys}")
+
+    if not isinstance(clf, BaseEstimator):
+        raise TypeError("clf should be an instance of a scikit-learn classifier")
+
     categorical_preprocessor = Pipeline(
         steps=[
         ('onehot', OneHotEncoder(handle_unknown='ignore'))
