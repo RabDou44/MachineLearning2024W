@@ -25,8 +25,8 @@ def main():
     y = data['target']
 
     # # classifierKneighbors = [ KNeighborsClassifier(n_jobs=-1, n_neighbors=k) for k in range(2, 13)]
-    classifierKneighbors = [ SVC(kernel='linear')]
-    results, model = perform_holdout(X,y, classifierKneighbors[0])
+    model_holdout = get_pipeline(feature_structure, SVC(kernel='linear'))
+    results, model = perform_holdout(X,y, model_holdout)
     
     # save + print
     print(results) 
