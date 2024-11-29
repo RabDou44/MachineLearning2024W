@@ -37,7 +37,8 @@ def make_random_forest(df):
     # I need to use the standard deviation reduction (SDR).
     # SDR is calculated across the whole dataset standard deviation.
     # Question: for the small bagging dataset, the sd might be very high. Is it correct to use sd across the whole dataset?
-
+    # Possible answer: Step 3:
+    # https://medium.com/analytics-vidhya/a-super-simple-explanation-to-regression-trees-and-random-forest-regressors-91f27957f688
 def select_random_features(df):
     total_features = df.shape[1]
     k = total_features // 2
