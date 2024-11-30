@@ -43,6 +43,20 @@ class TreeNode:
         self.depth = depth
 
     def calculate_se_on_split(self, df, mean):
+        """
+      Calculate the Sum of Squared Errors (SSE) for a given split using the provided mean value.
+
+      :param df: pandas DataFrame containing a 'Target' column
+      :param mean: float, the mean value of the target variable
+      :return: float, the calculated SSE
+
+      Example:
+          Suppose we have the following data:
+          df = pd.DataFrame({'Target': [1, 2, 3]})
+          The mean value is 2:
+          Calculating the SSE gives 2:
+          ((1-2)^2 + (2-2)^2 + (3-2)^2) = 1 + 0 + 1 = 2
+        """
         return ((df['Target'] - mean) ** 2).sum()
 
     def calculate_single_sse_on_split(self, df):
@@ -50,6 +64,33 @@ class TreeNode:
         return self.calculate_se_on_split(df, mean)
 
     def calculate_total_sse_on_split(self, df, feature, mean_value):
+        """
+        Calculate the total SSE for a dataset split into two based on a feature threshold.
+
+        This function divides the dataset into two subsets:
+        - One where the feature values are <= mean_value
+        - Another where feature values are > mean_value
+        It calculates the SSE for each subset and returns the sum.
+
+        :param df: pandas DataFrame containing the data
+        :param feature: str, column name used for splitting the data
+        :param mean_value: float, the mean value to split the data on
+        :return: float, the total SSE of both splits
+
+        Example:
+            Suppose the DataFrame:
+            data = pd.DataFrame({'Feature': [1, 2, 3, 4], 'Target': [2, 3, 4, 5]})
+            We split it with:
+            feature = 'Feature'
+            mean_value = 2.5
+            The data splits into:
+            Left subset (Feature <= 2.5): Target = [2, 3]
+            Right subset (Feature > 2.5): Target = [4, 5]
+            SSE calculation:
+             # Left SSE: ((2-2.5)^2 + (3-2.5)^2) = 0.5
+             # Right SSE: ((4-4.5)^2 + (5-4.5)^2) = 0.5
+             # Total SSE = 0.5 + 0.5 = 1.0
+        """
         left_sse = self.calculate_single_sse_on_split(df[df[feature] <= mean_value])
         right_sse = self.calculate_single_sse_on_split(df[df[feature] > mean_value])
         return left_sse + right_sse
@@ -65,6 +106,7 @@ class TreeNode:
 
         for mean in means:
             total_sse = self.calculate_total_sse_on_split(df, feature, mean)
+            # find the lowest error (Sum of Squared Errors) for a given feature.
             if total_sse < best_sse:
                 best_sse = total_sse
                 best_split = mean
