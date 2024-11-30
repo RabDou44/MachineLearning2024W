@@ -1,9 +1,5 @@
-import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
-
-from ass2.random_forest_constants import *
-from ass2.regression_tree import TreeNode
+from ass2.regression_tree import *
 
 
 # references:
@@ -12,101 +8,85 @@ from ass2.regression_tree import TreeNode
 # https://www.researchgate.net/figure/Pseudocode-of-random-Forest-classification-23_fig4_362631001
 # https://dataaspirant.com/random-forest-algorithm-machine-learing/
 # https://www.geeksforgeeks.org/random-forest-regression-in-python/
+# https://medium.com/analytics-vidhya/a-super-simple-explanation-to-regression-trees-and-random-forest-regressors-91f27957f688
 
-# a.k.a. bagging_random_datasets
-def bootstrap(df):
-    datasets = []
-    for _ in range(BAGGING_RANDOM_FOREST_SET_AMOUNT):
-        # replace=True means an element can be chosen multiple times.
-        sampled_data = df.sample(n=BAGGING_RANDOM_FOREST_SET_SIZE, replace=True, random_state=RANDOM_SEED)
-        datasets.append(sampled_data)
-    return datasets
+def test_forest(forest):
+    test_samples = [
+        {
+            "Level": 1,
+            "Position_Business Analyst": True,
+            "Position_C-level": False,
+            "Position_CEO": False,
+            "Position_Country Manager": False,
+            "Position_Junior Consultant": False,
+            "Position_Manager": False,
+            "Position_Partner": False,
+            "Position_Region Manager": False,
+            "Position_Senior Consultant": False,
+            "Position_Senior Partner": False,
+        },
+        {
+            "Level": 4,
+            "Position_Business Analyst": False,
+            "Position_C-level": False,
+            "Position_CEO": False,
+            "Position_Country Manager": False,
+            "Position_Junior Consultant": False,
+            "Position_Manager": True,
+            "Position_Partner": False,
+            "Position_Region Manager": False,
+            "Position_Senior Consultant": False,
+            "Position_Senior Partner": False,
+        },
+        {
+            "Level": 10,
+            "Position_Business Analyst": False,
+            "Position_C-level": False,
+            "Position_CEO": True,
+            "Position_Country Manager": False,
+            "Position_Junior Consultant": False,
+            "Position_Manager": False,
+            "Position_Partner": False,
+            "Position_Region Manager": False,
+            "Position_Senior Consultant": False,
+            "Position_Senior Partner": False,
+        },
+    ]
+    test_df = pd.DataFrame(test_samples)
+    expectation = [45000, 80000, 1000000]
+    for i, sample in test_df.iterrows():
+        prediction = forest.predict(sample)
+        print('===')
+        print(f"Sample {i + 1}: Expectation = {expectation[i]}")
+        print(f"Sample {i + 1}: Prediction = {prediction}")
 
-def find_means_between_subsequent_x(df, feature):
-    # ([1,2,3][:-1] + [1,2,3][1:]) / 2
-    # ([1,2] + [2,3]) / 2
-    # [3,5] / 2
-    # [1.5,2.5]
-    means = (df[feature].values[:-1] + df[feature].values[1:]) / 2
-    return means
-
-def calculate_se_on_split(df, mean):
-    sse = ((df['Target'] - mean) ** 2).sum()
-    return sse
-
-def calculate_single_sse_on_split(df):
-    mean = df['Target'].mean()
-    sse = calculate_se_on_split(df, mean)
-    return sse
-
-def calculate_total_sse_on_split(df, feature, value):
-    # Split the DataFrame into left and right based on the mean value
-    left_sse = calculate_single_sse_on_split(df[df[feature] <= value])
-    right_sse = calculate_single_sse_on_split(df[df[feature] > value])
-
-    # Return the total SSE for this split
-    total_sse = left_sse + right_sse
-    return total_sse
-
-def root(df_single_feature_sorted, single_feature):
-
-    means = find_means_between_subsequent_x(df_single_feature_sorted, single_feature)
-    print(means)
-    sse = []
-    for mean in means:
-        sse.append(calculate_total_sse_on_split(df_single_feature_sorted, single_feature, mean))
-    print('sse', sse)
-    # todo chose the lowest sse to split
-
-    mse = calculate_single_sse_on_split(df_single_feature_sorted)
-    print(mse)
-
-def make_random_forest(df):
-    # ToDo select multiple features
-    single_feature = select_random_feature(df, 1)[0]
-    print('single feature: ',single_feature)
-    df_single_feature = df[[single_feature, 'Target']]
-    df_single_feature_sorted = df_single_feature.sort_values(by=single_feature)
-    print('df with single feature:', df_single_feature_sorted)
-    root(df_single_feature_sorted, single_feature)
-
-
-    print('======')
-
-def select_random_feature(df, k):
-    # remove target column from selecting a random feature.
-    feature_columns = df.drop(columns=['Target']).columns
-    feature = np.random.choice(feature_columns, k, replace=False)
-    return feature
-
-
-# steps are from 05.11. lecture. Slide 47. In the lecture there is a not a regression, but a classifier.
 def random_forest(df):
-    np.random.seed(RANDOM_SEED)
-
-    datasets = bootstrap(df)
-    for dataset in datasets:
-        make_random_forest(dataset)
+    forest = RandomForest(n_trees=BAGGING_RANDOM_FOREST_SET_AMOUNT)
+    forest.fit(df)
+    return forest
 
 def prepare_data(df):
     # Rename 'Salary' to 'Target'
     df = df.rename(columns={'Salary': 'Target'})
 
     # one-to-n:
-    return pd.get_dummies(df, columns=['Position'])
+    df = pd.get_dummies(df, columns=['Position'])
 
     # label encoding:
     # label_encoder = LabelEncoder()
     # df['Position'] = label_encoder.fit_transform(df['Position'])
-    # return df
+
+    df.to_csv('../data/our/ass2-test-dataset-salary-prepared.csv', index=False)
+    return df
 
 def main():
     print("Hello Dmytro, Michael and Adam!")
     df = pd.read_csv('../data/our/ass2-test-dataset-salary.csv')
 
     df = prepare_data(df)
-    random_forest(df)
+    forest = random_forest(df)
 
+    test_forest(forest)
 
 if __name__ == "__main__":
     main()
