@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 from ass2.random_forest_constants import *
 from ass2.regression_tree import TreeNode
@@ -21,37 +22,63 @@ def bootstrap(df):
         datasets.append(sampled_data)
     return datasets
 
+def find_means_between_subsequent_x(df, feature):
+    # ([1,2,3][:-1] + [1,2,3][1:]) / 2
+    # ([1,2] + [2,3]) / 2
+    # [3,5] / 2
+    # [1.5,2.5]
+    means = (df[feature].values[:-1] + df[feature].values[1:]) / 2
+    return means
+
+def calculate_se_on_split(df, mean):
+    sse = ((df['Target'] - mean) ** 2).sum()
+    return sse
+
+def calculate_single_sse_on_split(df):
+    mean = df['Target'].mean()
+    sse = calculate_se_on_split(df, mean)
+    return sse
+
+def calculate_total_sse_on_split(df, feature, value):
+    # Split the DataFrame into left and right based on the mean value
+    left_sse = calculate_single_sse_on_split(df[df[feature] <= value])
+    right_sse = calculate_single_sse_on_split(df[df[feature] > value])
+
+    # Return the total SSE for this split
+    total_sse = left_sse + right_sse
+    return total_sse
+
+def root(df_single_feature_sorted, single_feature):
+
+    means = find_means_between_subsequent_x(df_single_feature_sorted, single_feature)
+    print(means)
+    sse = []
+    for mean in means:
+        sse.append(calculate_total_sse_on_split(df_single_feature_sorted, single_feature, mean))
+    print('sse', sse)
+    # todo chose the lowest sse to split
+
+    mse = calculate_single_sse_on_split(df_single_feature_sorted)
+    print(mse)
 
 def make_random_forest(df):
-    """
-    1) Randomly select “k” features from total “m” features. Where k << m
-    2) Among the “k” features, calculate the node “d” using the best split point.
-    3) Split the node into daughter nodes using the best split.
-    4) Repeat 1 to 3 steps until “l” number of nodes has been reached.
-    5)Build forest by repeating steps 1 to 4 for “n” number times to create “n” number of trees.
-    """
-    features = select_random_features(df)
-    print('features:', features)
-    # calculate the best split (regression):
-    # according to slides (predicting numeric values p. 49),
-    # I need to use the standard deviation reduction (SDR).
-    # SDR is calculated across the whole dataset standard deviation.
-    # Question: for the small bagging dataset, the sd might be very high. Is it correct to use sd across the whole dataset?
-    # Possible answer: Step 3:
-    # https://medium.com/analytics-vidhya/a-super-simple-explanation-to-regression-trees-and-random-forest-regressors-91f27957f688
-def select_random_features(df):
-    total_features = df.shape[1]
-    k = total_features // 2
-    features = np.random.choice(total_features, k, replace=False)
-    return features
+    # ToDo select multiple features
+    single_feature = select_random_feature(df, 1)[0]
+    print('single feature: ',single_feature)
+    df_single_feature = df[[single_feature, 'Target']]
+    df_single_feature_sorted = df_single_feature.sort_values(by=single_feature)
+    print('df with single feature:', df_single_feature_sorted)
+    root(df_single_feature_sorted, single_feature)
 
 
-def build_regressions():
-    return
+    print('======')
 
+def select_random_feature(df, k):
+    # remove target column from selecting a random feature.
+    feature_columns = df.drop(columns=['Target']).columns
+    feature = np.random.choice(feature_columns, k, replace=False)
+    return feature
 
-def combine_regressions():
-    return
 
 # steps are from 05.11. lecture. Slide 47. In the lecture there is a not a regression, but a classifier.
 def random_forest(df):
@@ -60,14 +87,24 @@ def random_forest(df):
     datasets = bootstrap(df)
     for dataset in datasets:
         make_random_forest(dataset)
-    regressions = build_regressions()
-    result = combine_regressions()
 
+def prepare_data(df):
+    # Rename 'Salary' to 'Target'
+    df = df.rename(columns={'Salary': 'Target'})
+
+    # one-to-n:
+    return pd.get_dummies(df, columns=['Position'])
+
+    # label encoding:
+    # label_encoder = LabelEncoder()
+    # df['Position'] = label_encoder.fit_transform(df['Position'])
+    # return df
 
 def main():
     print("Hello Dmytro, Michael and Adam!")
     df = pd.read_csv('../data/our/ass2-test-dataset-salary.csv')
 
+    df = prepare_data(df)
     random_forest(df)
 
 
