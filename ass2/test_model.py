@@ -21,6 +21,7 @@ def main():
     print("=========================================")
     print(evaluate_models(df, column_types, [RandomForestRegressor(n_estimators=3)]))
 
+    # Old testing of it directly
     # df = pd.get_dummies(df, columns=['Position'])   # basically one-hot, later done in pipeline
     # # df = df.rename(columns={'Salary': 'Target'})
     # x = df.drop(columns=['Salary'])

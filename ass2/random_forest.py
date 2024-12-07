@@ -55,15 +55,6 @@ class RandomForest(BaseEstimator):
 
         # Aggregate predictions from all trees for each sample
         return [np.mean([tree.predict(sample) for tree in self.trees]) for sample in X]
-    
-    # Might not need cause inherited from BaseEstimator?
-    # def get_params(self, deep=True):
-    #     return {"n_trees": self.n_trees, "bootstrap_size": self.bootstrap_size, "max_depth": self.max_depth}
-    
-    # def set_params(self, **parameters):
-    #     for parameter, value in parameters.items():
-    #         setattr(self, parameter, value)
-    #     return self
 
     # a.k.a. bagging_random_datasets
     def bootstrap(self, X, y):
