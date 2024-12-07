@@ -1,5 +1,7 @@
 import pandas as pd
-from ass2.regression_tree import *
+from regression_tree import *
+import numpy as np
+from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 
 
 # references:
@@ -10,83 +12,46 @@ from ass2.regression_tree import *
 # https://www.geeksforgeeks.org/random-forest-regression-in-python/
 # https://medium.com/analytics-vidhya/a-super-simple-explanation-to-regression-trees-and-random-forest-regressors-91f27957f688
 
-def test_forest(forest):
-    test_samples = [
-        {
-            "Level": 1,
-            "Position_Business Analyst": True,
-            "Position_C-level": False,
-            "Position_CEO": False,
-            "Position_Country Manager": False,
-            "Position_Junior Consultant": False,
-            "Position_Manager": False,
-            "Position_Partner": False,
-            "Position_Region Manager": False,
-            "Position_Senior Consultant": False,
-            "Position_Senior Partner": False,
-        },
-        {
-            "Level": 4,
-            "Position_Business Analyst": False,
-            "Position_C-level": False,
-            "Position_CEO": False,
-            "Position_Country Manager": False,
-            "Position_Junior Consultant": False,
-            "Position_Manager": True,
-            "Position_Partner": False,
-            "Position_Region Manager": False,
-            "Position_Senior Consultant": False,
-            "Position_Senior Partner": False,
-        },
-        {
-            "Level": 10,
-            "Position_Business Analyst": False,
-            "Position_C-level": False,
-            "Position_CEO": True,
-            "Position_Country Manager": False,
-            "Position_Junior Consultant": False,
-            "Position_Manager": False,
-            "Position_Partner": False,
-            "Position_Region Manager": False,
-            "Position_Senior Consultant": False,
-            "Position_Senior Partner": False,
-        },
-    ]
-    test_df = pd.DataFrame(test_samples)
-    expectation = [45000, 80000, 1000000]
-    for i, sample in test_df.iterrows():
-        prediction = forest.predict(sample)
-        print('===')
-        print(f"Sample {i + 1}: Expectation = {expectation[i]}")
-        print(f"Sample {i + 1}: Prediction = {prediction}")
+class RandomForest(BaseEstimator):
+    def __init__(self, n_trees=3, bootstrap_size=0.6, max_depth = 10):
+        self.n_trees = n_trees
+        self.bootstrap_size = bootstrap_size
+        self.max_depth = max_depth
 
-def random_forest(df):
-    forest = RandomForest(n_trees=BAGGING_RANDOM_FOREST_SET_AMOUNT)
-    forest.fit(df)
-    return forest
+    def fit(self, X, y):
+        assert(X.shape[0] == y.shape[0])
+        if not isinstance(X, pd.DataFrame): # Mainly to make sklearns checkestimator happy
+            X = pd.DataFrame(X.todense(), index=np.arange(1, X.shape[0] + 1))
+            y = pd.DataFrame(y.tolist(), index=np.arange(1, X.shape[0] + 1))
+        # Generate bootstrapped datasets and train trees
+        datasets = self.bootstrap(X,y)
+        self.trees = []
+        for (X_tree, y_tree) in datasets:
+            tree = TreeNode(max_depth=self.max_depth)
+            tree.train(X_tree, y_tree)
+            self.trees.append(tree)
+        return self
 
-def prepare_data(df):
-    # Rename 'Salary' to 'Target'
-    df = df.rename(columns={'Salary': 'Target'})
+    def predict(self, X):
+        if not isinstance(X, pd.DataFrame): # Mainly to make sklearns checkestimator happy
+            X = pd.DataFrame(X, index=np.arange(1, X.shape[0] + 1))
 
-    # one-to-n:
-    df = pd.get_dummies(df, columns=['Position'])
+        # Aggregate predictions from all trees for each sample
+        return [np.mean([tree.predict(sample) for tree in self.trees]) for _, sample in X.iterrows()]
+    
+    # Might not need cause inherited from BaseEstimator?
+    # def get_params(self, deep=True):
+    #     return {"n_trees": self.n_trees, "bootstrap_size": self.bootstrap_size, "max_depth": self.max_depth}
+    
+    # def set_params(self, **parameters):
+    #     for parameter, value in parameters.items():
+    #         setattr(self, parameter, value)
+    #     return self
 
-    # label encoding:
-    # label_encoder = LabelEncoder()
-    # df['Position'] = label_encoder.fit_transform(df['Position'])
-
-    df.to_csv('../data/our/ass2-test-dataset-salary-prepared.csv', index=False)
-    return df
-
-def main():
-    print("Hello Dmytro, Michael and Adam!")
-    df = pd.read_csv('../data/our/ass2-test-dataset-salary.csv')
-
-    df = prepare_data(df)
-    forest = random_forest(df)
-
-    test_forest(forest)
-
-if __name__ == "__main__":
-    main()
+    # a.k.a. bagging_random_datasets
+    def bootstrap(self, X, y):
+        datasets = []
+        for _ in range(self.n_trees):
+            selected = np.random.choice(len(X), size=int(len(X) * self.bootstrap_size), replace=False)   # replace=True means an element can be chosen multiple times.
+            datasets.append((X.iloc[selected], y.iloc[selected]))
+        return datasets
