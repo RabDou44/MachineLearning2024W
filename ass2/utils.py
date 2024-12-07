@@ -84,46 +84,13 @@ def evaluate_models(data, feature_structure, classifiers):
         
         # Holdout
         res_holdout, model_holdout = perform_holdout(X, y, model_holdout)
-        # print(res_holdout)
-        return
-        # # Cross-validation
+
+        # Cross-validation
         res_cv, model_cv = perform_cv(X, y, model_cv)
         
         results = append_results(results, model_holdout, model_cv, res_holdout, res_cv)
     
     return pd.DataFrame(results)
-
-def append_results(results, model_holdout, model_cv, res_holdout, res_cv):
-    """
-    Appends the results of the holdout and cross-validation to the results dictionary.
-
-    Parameters
-    -----------
-    results: dict
-        The dictionary containing the results.
-    model_holdout: sklearn pipeline
-        The pipeline used for the holdout evaluation.
-    model_cv: sklearn pipeline
-        The pipeline used for the cross-validation evaluation.
-    res_holdout: dict
-        The results of the holdout evaluation.
-    res_cv: dict
-        The results of the cross-validation evaluation.
-    """
-    model_cv_name = str(model_cv.steps[1][1]) + "_CV"
-    model_holdout_name = str(model_holdout.steps[1][1]) + "_Holdout"
-
-    if results:
-        results["model"] += [model_holdout_name, model_cv_name]
-        for key in res_holdout.keys():
-            results[key] += [res_holdout[key], res_cv[key]]
-    else:
-        results = {
-            "model": [model_holdout_name, model_cv_name],
-            "mean_squared_error": [res_holdout["mean_squared_error"], res_cv["mean_squared_error"]],
-            "timing": [res_holdout["timing"], res_cv["timing"]]
-        }
-    return results
 
 
 def perform_holdout(X, y, clf, random_state=42):
@@ -152,7 +119,8 @@ def perform_holdout(X, y, clf, random_state=42):
     trainX, testX, trainY, testY = train_test_split(X, y, test_size=0.2, random_state=random_state)
     start_time = time.time()
     model_holdout.fit(trainX, trainY)
-    pred_y  = model_holdout.predict(testX)
+    
+    pred_y = model_holdout.predict(testX)
     fitting_time = time.time() - start_time
 
     results = {"mse":mean_squared_error(testY, pred_y),
@@ -183,12 +151,44 @@ def perform_cv(X, y, clf):
     start_time = time.time()
     cv_results = cross_validate(model_cv, X, y, cv=5, scoring=["neg_mean_squared_error"], verbose=1, return_estimator=True)
     whole_time = time.time() - start_time
-    res = {"mean_squared_error": np.nanmean(cv_results["mean_squared_error"]),
+    res = {"mse": -np.nanmean(cv_results["test_neg_mean_squared_error"]),
               "timing": whole_time}
-    best_estimator = cv_results["estimator"][np.argmax(cv_results["mean_squared_error"])]
-
+    best_estimator = cv_results["estimator"][np.argmax(cv_results["test_neg_mean_squared_error"])]
+    print(res)
     return (res, best_estimator) 
 
+
+def append_results(results, model_holdout, model_cv, res_holdout, res_cv):
+    """
+    Appends the results of the holdout and cross-validation to the results dictionary.
+
+    Parameters
+    -----------
+    results: dict
+        The dictionary containing the results.
+    model_holdout: sklearn pipeline
+        The pipeline used for the holdout evaluation.
+    model_cv: sklearn pipeline
+        The pipeline used for the cross-validation evaluation.
+    res_holdout: dict
+        The results of the holdout evaluation.
+    res_cv: dict
+        The results of the cross-validation evaluation.
+    """
+    model_cv_name = str(model_cv.steps[1][1]) + "_CV"
+    model_holdout_name = str(model_holdout.steps[1][1]) + "_Holdout"
+
+    if results:
+        results["model"] += [model_holdout_name, model_cv_name]
+        for key in res_holdout.keys():
+            results[key] += [res_holdout[key], res_cv[key]]
+    else:
+        results = {
+            "model": [model_holdout_name, model_cv_name],
+            "mse": [res_holdout["mse"], res_cv["mse"]],
+            "timing": [res_holdout["timing"], res_cv["timing"]]
+        }
+    return results
 
 
 # TODO: Adapt to regression if it is worth the effort
