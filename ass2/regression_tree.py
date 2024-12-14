@@ -46,6 +46,7 @@ class TreeNode:
         if best_feature is None or best_split is None or best_sse == 0.0:
             self.is_leaf = True
             self.mean_value = y.mean()
+            return
 
         self.feature = best_feature
         self.split_value = best_split
@@ -75,7 +76,12 @@ class TreeNode:
         if np.all(X == X[0]):    # All elements are the same
             return None, None
 
-        means = (X[:-1] + X[1:]) / 2
+        means = []
+        for i in range(1, len(X)):
+            (x1, x2) = (X[i-1], X[i])
+            if x1 == x2: 
+                continue
+            means.append((x1+x2)/2)
         best_sse = float('inf')
         best_split = None
         for mean in means:
