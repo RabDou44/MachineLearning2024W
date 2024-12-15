@@ -1,4 +1,3 @@
-from random_forest_constants import *
 import numpy as np
 
 class TreeNode:
@@ -23,7 +22,8 @@ class TreeNode:
          the split value which tells if you found the node, or you need to traverse left or right.
          the left and right nodes in case the current node is a tree.
 
-        :param df: is the dataset we are training on
+        :param X: is the dataset we are training on
+        :param y: is the target values for given X.
         """
 
         if self.depth >= self.max_depth or len(X) < 2:
@@ -102,8 +102,8 @@ class TreeNode:
         - Another where feature values are > mean_value
         It calculates the SSE for each subset and returns the sum.
 
-        :param df: pandas DataFrame containing the data
-        :param feature: str, column name used for splitting the data
+        :param X: train data
+        :param y: target for splitting the data
         :param mean_value: float, the mean value to split the data on
         :return: float, the total SSE of both splits
 
@@ -128,15 +128,14 @@ class TreeNode:
     
     def calculate_se_on_split(self, y):
         """
-      Calculate the Sum of Squared Errors (SSE) for a given split using the provided mean value.
+      Calculate the Sum of Squared Errors (SSE) for a given split using the y mean value.
 
-      :param df: pandas DataFrame containing a 'Target' column
-      :param mean: float, the mean value of the target variable
+      :param y: target column values
       :return: float, the calculated SSE
 
       Example:
           Suppose we have the following data:
-          df = pd.DataFrame({'Target': [1, 2, 3]})
+          y: [1, 2, 3]
           The mean value is 2:
           Calculating the SSE gives 2:
           ((1-2)^2 + (2-2)^2 + (3-2)^2) = 1 + 0 + 1 = 2
