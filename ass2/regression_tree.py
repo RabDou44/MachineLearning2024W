@@ -68,11 +68,6 @@ class TreeNode:
         self.right.train(right_X, right_y)
 
     def find_best_split(self, X, y):
-        # ([1,2,3][:-1] + [1,2,3][1:]) / 2
-        # ([1,2] + [2,3]) / 2
-        # [3,5] / 2
-        # [1.5,2.5]
-        # Mean computation of all adjacent pairs
         if np.all(X == X[0]):    # All elements are the same
             return None, None
 
