@@ -114,10 +114,11 @@ def perform_cv(X, y, clf):
 
     model_cv = clf
     start_time = time.time()
-    cv_results = cross_validate(model_cv, X, y, cv=5, scoring=["neg_mean_squared_error"], verbose=1, return_estimator=True)
+    cv_results = cross_validate(model_cv, X, y, cv=5, scoring=["neg_mean_squared_error","r2"], verbose=1, return_estimator=True)
     whole_time = time.time() - start_time
     res = {"mse": -np.nanmean(cv_results["test_neg_mean_squared_error"]),
-              "timing": whole_time}
+           "r2": np.nanmean(cv_results["test_r2"]),
+            "timing": whole_time}
     best_estimator = cv_results["estimator"][np.argmax(cv_results["test_neg_mean_squared_error"])]
     print(res)
     return (res, best_estimator) 
@@ -146,6 +147,7 @@ def append_results(results, model, res_model):
         results = {
             "model": [ model_cv_name],
             "mse": [res_model["mse"]],
+            "r2": [res_model["r2"]],
             "timing": [res_model["timing"]]
         }
     return results
