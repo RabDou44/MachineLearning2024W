@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, RobustScaler, OrdinalEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline, make_pipeline
 import numpy as np 
@@ -42,12 +42,17 @@ def get_pipeline(feature_structure, clf = RandomForest()):
 
     numerical_preprocessor = Pipeline([
         ("imputation_mean", SimpleImputer(missing_values=np.nan, strategy="mean")),
-        ('scaler', StandardScaler())
+        ('scaler', RobustScaler())
     ])  
+
+    ordinal_preprocessor = Pipeline([
+        ("ordinal", OrdinalEncoder()),
+    ])
 
     preprocessor = ColumnTransformer([
         ('categorical', categorical_preprocessor, feature_structure['cat']),
-        ('numerical', numerical_preprocessor, feature_structure['cont'])
+        ('numerical', numerical_preprocessor, feature_structure['cont']),
+        ('ordinal', ordinal_preprocessor, feature_structure['ord'])
     ])
 
     return Pipeline(steps=[('preprocessor', preprocessor), ('classifier', clf)])
@@ -79,54 +84,14 @@ def evaluate_models(data, feature_structure, classifiers):
     results = {}
 
     for clf in classifiers:
-        model_holdout = get_pipeline(feature_structure, clf)
-        model_cv = copy.deepcopy(model_holdout)
+        model_cv = get_pipeline(feature_structure, clf)
         
-        # Holdout
-        res_holdout, model_holdout = perform_holdout(X, y, model_holdout)
-
         # Cross-validation
         res_cv, model_cv = perform_cv(X, y, model_cv)
         
-        results = append_results(results, model_holdout, model_cv, res_holdout, res_cv)
+        results = append_results(results, model_cv, res_cv)
     
     return pd.DataFrame(results)
-
-
-def perform_holdout(X, y, clf, random_state=42):
-    """
-    Builds a model using the pipeline and returns it
-    with split data and specified parameters 
-
-    Parameters
-    -----------
-    X: pandas DataFrame
-        The data to use for training and testing the model.
-    y: pandas Series
-        The target variable.
-    clf: sklearn classifier
-        The classifier to use in the pipeline.
-    random_state: int
-        The random state to suse for the train-test split.
-
-    
-    Keyword arguments:
-    argument -- description
-    Return: return a tuple of performance metrics and the model
-    """
-
-    model_holdout = clf
-    trainX, testX, trainY, testY = train_test_split(X, y, test_size=0.2, random_state=random_state)
-    start_time = time.time()
-    model_holdout.fit(trainX, trainY)
-    
-    pred_y = model_holdout.predict(testX)
-    fitting_time = time.time() - start_time
-
-    results = {"mse":mean_squared_error(testY, pred_y),
-            "timing": fitting_time}    
-
-    return results, model_holdout
 
 def perform_cv(X, y, clf): 
     """
@@ -158,35 +123,30 @@ def perform_cv(X, y, clf):
     return (res, best_estimator) 
 
 
-def append_results(results, model_holdout, model_cv, res_holdout, res_cv):
+def append_results(results, model, res_model):
     """
-    Appends the results of the holdout and cross-validation to the results dictionary.
+    Appends the results of the cross-validation to the results dictionary.
 
     Parameters
     -----------
     results: dict
         The dictionary containing the results.
-    model_holdout: sklearn pipeline
-        The pipeline used for the holdout evaluation.
-    model_cv: sklearn pipeline
-        The pipeline used for the cross-validation evaluation.
-    res_holdout: dict
-        The results of the holdout evaluation.
-    res_cv: dict
-        The results of the cross-validation evaluation.
+    model: sklearn pipeline
+        The pipeline used for modelling .
+    res_model: dict
+        The results of the model evaluation.
     """
-    model_cv_name = str(model_cv.steps[1][1]) + "_CV"
-    model_holdout_name = str(model_holdout.steps[1][1]) + "_Holdout"
+    model_cv_name = str(model.steps[1][1]) + "_CV"
 
     if results:
-        results["model"] += [model_holdout_name, model_cv_name]
-        for key in res_holdout.keys():
-            results[key] += [res_holdout[key], res_cv[key]]
+        results["model"] += [model_cv_name]
+        for key in res_model.keys():
+            results[key] += [res_model[key]]
     else:
         results = {
-            "model": [model_holdout_name, model_cv_name],
-            "mse": [res_holdout["mse"], res_cv["mse"]],
-            "timing": [res_holdout["timing"], res_cv["timing"]]
+            "model": [ model_cv_name],
+            "mse": [res_model["mse"]],
+            "timing": [res_model["timing"]]
         }
     return results
 
