@@ -54,6 +54,12 @@ class RandomForest(BaseEstimator):
             X = np.asarray(X)
 
         # Aggregate predictions from all trees for each sample
+        # Example: Random Forest containing 3 decision trees. Their predictions for 3 samples are as follows:
+        #       Tree 1: [2, 3, 4]
+        #       Tree 2: [3, 4, 3]
+        #       Tree 3: [2, 4, 5]
+        # Output:
+        #           [2.33, 3.67, 4.0]
         return [np.mean([tree.predict(sample) for tree in self.trees]) for sample in X]
 
     # a.k.a. bagging_random_datasets
