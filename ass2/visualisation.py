@@ -5,7 +5,7 @@ import os
 import re
 
 
-def visualise_results(results_df, metrics = 'mse',print_results=True, save = False, folder_name= "figure"):
+def visualise_results(results_df, metrics = ['mse'],print_results=True, save = False, folder_name= "figure"):
     """Visualise the results of the model
     
     Keyword arguments:
@@ -13,10 +13,12 @@ def visualise_results(results_df, metrics = 'mse',print_results=True, save = Fal
     Return: return_description
     """
     results_df = results_df.copy()
-    if metrics in results_df.columns:
-        metrics = [metrics]
-    else:
+    if metrics is None:
         metrics = results_df.columns[1:]
+    else:
+        if not all([metric in results_df.columns for metric in metrics]):
+            raise ValueError(f"metric {metrics} not in the results_df columns")
+        
     results_df["model_name"] = results_df['model'].apply(lambda x: re.findall(r"(.*?)\(", x)[0])
     results_df["parameter"] = results_df['model'].apply(lambda x: re.findall(r"\((.*?)\=\d{1,}\)", x)[0])
     results_df["parameter_value"] = results_df['model'].apply(lambda x: re.findall(r"\=(\d{1,})", x)[0])
