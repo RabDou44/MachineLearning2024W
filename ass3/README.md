@@ -14,8 +14,11 @@
 
 - [ ] main algorithm implementation (classification - python class):
   - [x] add wrapper for sklearn methods
-  - [ ] building search space/ grid of hyperparameters 
+  - [ ] building search space/ grid of hyperparameters:
+      - graph representation of grid
+      - binary encoding of parameters 
   - [ ] annealing algorithm
+      - introduction of temperature parameter
 
 ## Evaluation:
 - [ ] comparison with TPOT
