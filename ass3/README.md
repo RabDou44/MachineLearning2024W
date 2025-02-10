@@ -13,7 +13,7 @@
   -  accuracy
 
 - [ ] main algorithm implementation (classification - python class):
-  - [ ] add wrapper for sklearn methods
+  - [x] add wrapper for sklearn methods
   - [ ] building search space/ grid of hyperparameters 
   - [ ] annealing algorithm
 
