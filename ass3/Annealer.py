@@ -1,5 +1,4 @@
 import random
-
 import numpy as np
 import networkx as nx
 from sklearn.base import BaseEstimator
@@ -113,42 +112,46 @@ class Annealer:
         else:
             G = self.G.copy()
 
-        visited_nodes = set()
+        # initialization
         candidates = set(G.nodes)
-        score = -np.inf
-        param = None
+        curr_node = random.choice(list(candidates))
+        best_params = G.nodes[curr_node]
+        best_score, _ = self.evaluate_node(best_params)
         i = 0
 
-        if curr_node is None or curr_node not in G.nodes:
-            curr_node = random.choice(list(candidates))
+        while i<max_iter and len(candidates) > 0:
 
-        while i<=max_iter and len(candidates) > 0:
+            neighbors = list(G.neighbors(curr_node))
+            scores = {node: self.evaluate_node(G.nodes[node])[0] for node in neighbors}
+
+            if neighbors and best_score < max(scores.values()):
+                # if there's an improvement then a new one is one replaced
+                curr_node = max(scores, key=scores.get)
+            else:
+                curr_node = random.choice(list(candidates))
+
+
             curr_params = G.nodes[curr_node]
             score, _ = self.evaluate_node(curr_params)
-            visited_nodes.add(curr_node)
-            candidates = candidates - visited_nodes
-            neighbors = list(G.neighbors(curr_node))
+            candidates = candidates - set( neighbors + [curr_node])
 
-            if not neighbors:
-                l_nodes = list( set(G.nodes) - {curr_node})
-                curr_node = random.choice(l_nodes)
-                curr_params = G.nodes[curr_node]
-                score, _ = self.evaluate_node(curr_params)
-
-            # explore neighbours
-            scores = {node:self.evaluate_node(G.nodes[node])[0] for node in neighbors}
-            if score <  max(scores.values()):
-                argmax_score = max(scores, key=scores.get)
-                score = scores[argmax_score]
-                param = G.nodes[argmax_score]
+            if score > best_score:
+                best_score = score
+                best_params = curr_params
 
             # update current node
             i += 1
-        return param, score, time.time() - start_time
+        return best_params, best_score, time.time() - start_time
 
     def evaluate_node(self, node_params):
         """
         Evaluate a node - dict
+        ----------------------
+        parameters:
+            node_params - dictinary of parameters
+        return:
+            score - mean score from cross_validation
+            time - time in seconds
         """
         start_time = time.time()
         model = Pipeline(steps=[('preprocessor', self.preprocessor_step), ('classifier', self.__method__.set_params(**node_params))])
@@ -179,16 +182,6 @@ class Annealer:
 
             self.G = G
         return self.G
-
-
-
-    def get_neighbours(self, curr_params):
-        """
-        Get the neighbours of a node
-        ----------
-        curr_params: tuple - current parameters
-        """
-        return list(self.G.neighbors(curr_params))
 
     # utils
     def check_param_space(self):
