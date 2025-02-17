@@ -14,11 +14,18 @@
 
 - [ ] main algorithm implementation (classification - python class):
   - [x] add wrapper for sklearn methods
-  - [ ] building search space/ grid of hyperparameters:
+  - [x] building search space/ grid of hyperparameters:
       - graph representation of grid
       - binary encoding of parameters 
-  - [ ] annealing algorithm
+  - [x] annealing algorithm
       - introduction of temperature parameter
+      - [ ] provide time stop criteria
+- [ ] Big daddy wrapper
+  - [ ] fix time limit (1h for dataset)
+  - [ ] split for 5 classifiers
+  - [ ] time estimator to +- find the required level
+- [ ] Evaluation of state-of-the-art (Accuracy and selected pipeline) across all datasets
+  - [ ] split the dataset 80% training and 20% for evaluation.
 
 ## Evaluation:
 - [ ] comparison with TPOT
