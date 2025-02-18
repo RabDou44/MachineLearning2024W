@@ -226,9 +226,10 @@ class Annealer:
 
         return self.GX
 
-    def simulation_annealing(self, initial_temp = 10., cooling_rate =  0.9):
+    def simulation_annealing(self, initial_temp = 10., final_temp = 1e-03):
         start_time = time.time()
         G = self.build_search_space2()
+        alpha = self.get_alpha(self.iterations, initial_temp, final_temp)   # Calculate cooling rate alpha
 
         candidates = list(G.nodes)
         curr_node = random.choice(candidates)
@@ -256,10 +257,16 @@ class Annealer:
                     best_score = next_score
                     best_params = next_params
 
-            temperature *= cooling_rate
+            temperature *= alpha
             i += 1
 
+        # TODO: DO we want to store the best score / model found thus far during search and return the model?
+
         return best_params, best_score, time.time() - start_time
+    
+    
+    def get_alpha(self, iterations, initial_temp, final_temp):
+        return pow(final_temp / initial_temp, 1 / iterations)
 
 
     def check_param_space(self):
