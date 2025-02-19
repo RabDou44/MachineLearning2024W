@@ -80,6 +80,7 @@ class Annealer:
         # currently typical grid search
         # assert(self.check_param_space(), "The search space is not a subset of the method's parameters")
         # assert(self.__feature_structure__,"Feature structure is not defined"
+        print("Perform grid search")
         param_grid = pd.DataFrame(self.get_full_grid(), columns=self.__search_spaces__.keys())
         best_params = None
         best_score = - np.inf
@@ -102,10 +103,16 @@ class Annealer:
                 best_score = score
                 best_params = dict_params
 
-            print(f"Iteration score {index+1}: {score} with params: {dict_params}")
+            # print(f"Iteration score {index+1}: {score} with params: {dict_params}")
 
         print(f"""Best score: {best_score} with params: {best_params}""")
         return best_params, best_score, timing
+    
+    def evaluate_params(self, params):
+        dict_params =  dict(zip(self.__search_spaces__.keys(), params))
+        model = Pipeline(steps=[('preprocessor', self.preprocessor_step), ('classifier', self.__method__.set_params(**dict_params))])
+        # cross validation
+        return cross_val_score(model, self.X, self.y, cv=self.__fold_num__, scoring=self.__metric__, n_jobs =-1).mean()
 
     def hill_climbing(self, curr_node=None):
         # build search graph
@@ -227,9 +234,10 @@ class Annealer:
         return self.GX
 
     def simulation_annealing(self, initial_temp = 10., final_temp = 1e-03):
+        print(f"Start SA with {self.__max_iter__} iterations")
         start_time = time.time()
         G = self.build_search_space2()
-        alpha = self.get_alpha(self.iterations, initial_temp, final_temp)   # Calculate cooling rate alpha
+        alpha = self.get_alpha(self.__max_iter__, initial_temp, final_temp)   # Calculate cooling rate alpha
 
         candidates = list(G.nodes)
         curr_node = random.choice(candidates)
@@ -240,7 +248,7 @@ class Annealer:
         temperature = initial_temp
         i = 0
 
-        while i < self.__max_iter__ and temperature > 1e-3:
+        while i < self.__max_iter__ and temperature > final_temp:
             neighbors = list(G.neighbors(curr_node))
             if not neighbors:
                 break
@@ -260,8 +268,7 @@ class Annealer:
             temperature *= alpha
             i += 1
 
-        # TODO: DO we want to store the best score / model found thus far during search and return the model?
-
+        print(f"Finished SA with best_score={best_score}")
         return best_params, best_score, time.time() - start_time
     
     
