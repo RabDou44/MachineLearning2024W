@@ -3,7 +3,7 @@ import numpy as np
 import math
 import networkx as nx
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, RobustScaler, OrdinalEncoder
 from sklearn.impute import SimpleImputer
@@ -113,6 +113,11 @@ class Annealer:
         model = Pipeline(steps=[('preprocessor', self.preprocessor_step), ('classifier', self.__method__.set_params(**dict_params))])
         # cross validation
         return cross_val_score(model, self.X, self.y, cv=self.__fold_num__, scoring=self.__metric__, n_jobs =-1).mean()
+    
+    def train_model(self, dict_params):
+        model = Pipeline(steps=[('preprocessor', self.preprocessor_step), ('classifier', self.__method__.set_params(**dict_params))])
+        model.fit(self.X, self.y)
+        return model
 
     def hill_climbing(self, curr_node=None):
         # build search graph
@@ -235,8 +240,9 @@ class Annealer:
 
     def simulation_annealing(self, initial_temp = 10., final_temp = 1e-03):
         print(f"Start SA with {self.__max_iter__} iterations")
-        start_time = time.time()
+        start_time = time.time()        
         G = self.build_search_space2()
+        print("built search space")
         alpha = self.get_alpha(self.__max_iter__, initial_temp, final_temp)   # Calculate cooling rate alpha
 
         candidates = list(G.nodes)
@@ -249,7 +255,9 @@ class Annealer:
         i = 0
 
         while i < self.__max_iter__ and temperature > final_temp:
+            print(i)
             neighbors = list(G.neighbors(curr_node))
+            
             if not neighbors:
                 break
 
