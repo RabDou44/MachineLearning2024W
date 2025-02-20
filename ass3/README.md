@@ -20,10 +20,10 @@
   - [x] annealing algorithm
       - introduction of temperature parameter
       - [ ] provide time stop criteria
-- [ ] Big daddy wrapper
-  - [ ] fix time limit (1h for dataset)
-  - [ ] split for 5 classifiers
-  - [ ] time estimator to +- find the required level
+- [x] Big daddy wrapper
+  - [x] fix time limit (1h for dataset)
+  - [x] split for 5 classifiers
+  - [x] time estimator to +- find the required level
 - [ ] Evaluation of state-of-the-art (Accuracy and selected pipeline) across all datasets
   - [ ] split the dataset 80% training and 20% for evaluation.
 
