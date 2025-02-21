@@ -20,7 +20,7 @@ class AutoMLClassifier:
     | **AutoML Capabilities**    | Fully automated: model selection, tuning, ensembles              | Focused mainly on pipeline optimization               |
     | **Ease of Use**            | Powerful, requires resource and process learning                 | Simple UI but less suited for big data                 |
     """
-    def __init__(self, max_time_tpot=1, max_time_h2o=1):
+    def __init__(self, max_time_tpot=60, max_time_h2o=60):
         self.max_time_tpot = max_time_tpot
         self.max_time_h2o = max_time_h2o
         self.tpot_model = None
@@ -46,7 +46,7 @@ class AutoMLClassifier:
         print("[*] Training TPOT Classifier")
         self.tpot_model = TPOTClassifier(generations=5, population_size=50, cv=5,
                                          scoring='accuracy',
-                                         verbosity=2,
+                                         verbosity=0,
                                          random_state=42,
                                          max_time_mins=self.max_time_tpot)
         self.tpot_model.fit(X_train, y_train)
@@ -58,7 +58,7 @@ class AutoMLClassifier:
         - **Distributed Machine Learning**: Algorithms (e.g., Random Forest, GBM, XGBoost, GLM, Deep Learning) are parallelized and designed for handling rows distributed across machines.
         """
         print("[*] Training H2O AutoML...")
-        h2o.init()
+        h2o.init(verbose=False)
         # Convert to H2OFrame
         h2o_train = h2o.H2OFrame(pd.concat([X_train, y_train], axis=1))
         target = y_train.name
