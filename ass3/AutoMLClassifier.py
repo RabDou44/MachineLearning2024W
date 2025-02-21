@@ -20,7 +20,7 @@ class AutoMLClassifier:
     | **AutoML Capabilities**    | Fully automated: model selection, tuning, ensembles              | Focused mainly on pipeline optimization               |
     | **Ease of Use**            | Powerful, requires resource and process learning                 | Simple UI but less suited for big data                 |
     """
-    def __init__(self, max_time_tpot=60, max_time_h2o=60):
+    def __init__(self, max_time_tpot=1, max_time_h2o=1):
         self.max_time_tpot = max_time_tpot
         self.max_time_h2o = max_time_h2o
         self.tpot_model = None
