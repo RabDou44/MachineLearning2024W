@@ -5,7 +5,7 @@ import networkx as nx
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, RobustScaler, OrdinalEncoder
+from sklearn.preprocessing import OneHotEncoder, RobustScaler, OrdinalEncoder, LabelEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 import itertools
@@ -50,8 +50,15 @@ class Annealer:
         #                               all(isinstance(v, (int, float)) for v in values)}
 
         ## predefine preprocessing steps
+        binary_preprocessor = Pipeline(
+            steps=[
+                ('ordinal', OrdinalEncoder()),
+                ('imputation_unknown', SimpleImputer(strategy='constant', fill_value=-1)),
+            ])
+
         categorical_preprocessor = Pipeline(
             steps=[
+                ('imputation_unknown', SimpleImputer(strategy='constant', fill_value='Unknown')),
                 ('onehot', OneHotEncoder(handle_unknown='ignore'))
             ])
 
@@ -60,14 +67,17 @@ class Annealer:
             ('scaler', RobustScaler())
         ])
 
+        # must be ordinal values already - label encoding before hand
         ordinal_preprocessor = Pipeline([
-            ("ordinal", OrdinalEncoder()),
+            ("ordinal", OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=np.nan)),
+            ("imputation_median", SimpleImputer(strategy='median'))
         ])
 
         self.preprocessor_step = ColumnTransformer([
             ('categorical', categorical_preprocessor, feature_structure['cat']),
             ('numerical', numerical_preprocessor, feature_structure['cont']),
-            ('ordinal', ordinal_preprocessor, feature_structure['ord'])
+            ('ordinal', ordinal_preprocessor, feature_structure['ord']),
+            ('binary', binary_preprocessor, feature_structure['bin'])
         ])
 
         ## split dataset
