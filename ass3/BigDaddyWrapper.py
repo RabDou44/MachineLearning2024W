@@ -6,6 +6,7 @@ from sklearn.neural_network import MLPClassifier
 import time
 from Annealer import Annealer
 import itertools
+import BigDaddyWrapper
 
 class BigDaddyWrapper:
     def __init__(self, data, feature_structure, time_limit=60, max_annealing_iterations = 100000):
@@ -72,7 +73,10 @@ class BigDaddyWrapper:
                 'shuffle': [True, False], 
                 'early_stopping': [True, False]
             })
-        ]      
+        ]
+    
+    def set_classifiers(self, classifiers):
+        self.classifiers = classifiers
 
     def get_hidden_layer_sizes(sizes, depth):
         combinations = []
@@ -120,14 +124,12 @@ class BigDaddyWrapper:
         grid = annealer.get_full_grid()
         print(f"Grid len: {len(grid)}")
         limit = min(max_iterations, len(grid))
-
         # Warmup CPU
         start = time.time()
-        for i in range(limit):
+        for i in range(limit):         
             annealer.evaluate_params(grid[i])
-            if time.time() - start < warmup_time:
+            if time.time() - start > warmup_time:
                 break
-
         start = time.time()
         # Use the first (random) parameter combinations
         for i in range(limit):
@@ -135,7 +137,7 @@ class BigDaddyWrapper:
             current = time.time() - start
             if current < estimation_time_limit and i < limit - 1:
                 continue
-
+            
             # Estimation time limit reached
             time_per_iteration = current / (i+1)
             iterations = min((time_limit - current - warmup_time) / time_per_iteration, self.max_annealing_iterations)

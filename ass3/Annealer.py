@@ -23,7 +23,7 @@ class Annealer:
     search_space: dict - parameters value
     max_iter: int - maximum number of iterations
     metric: str - metric to use for evaluation
-    data: pandas DataFrame - dataset
+    data: (X,y) dataframe containing data
     """
     required_keys = {'bin', 'cat', 'cont', 'ord', 'target'}
 
@@ -71,8 +71,11 @@ class Annealer:
         ])
 
         ## split dataset
-        self.X = data.drop(columns=feature_structure['target']).reset_index(drop=True)
-        self.y = data[feature_structure['target']].reset_index(drop=True)
+        self.X = data[0]
+        self.y = data[1]
+        # self.X = data.drop(columns=feature_structure['target']).reset_index(drop=True)
+        # self.y = data[feature_structure['target']].reset_index(drop=True)
+        # print(self.y)
 
     def grid_search(self):
         """
@@ -105,7 +108,9 @@ class Annealer:
         return best_params, best_score, time.time() - start
     
     def evaluate_params(self, params):
+        # print(params)
         dict_params =  dict(zip(self.__search_spaces__.keys(), params)) if not isinstance(params, dict) else params
+        # print(dict_params)
         model = Pipeline(steps=[('preprocessor', self.preprocessor_step), ('classifier', self.__method__.set_params(**dict_params))])
         # cross validation
         return cross_val_score(model, self.X, self.y, cv=self.__fold_num__, scoring=self.__metric__, n_jobs =-1).mean()
