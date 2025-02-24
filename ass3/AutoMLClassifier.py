@@ -46,11 +46,13 @@ class AutoMLClassifier:
         print("[*] Training TPOT Classifier")
         self.tpot_model = TPOTClassifier(generations=5, population_size=50, cv=5,
                                          scoring='accuracy',
-                                         verbosity=0,
                                          random_state=42,
                                          max_time_mins=self.max_time_tpot)
         self.tpot_model.fit(X_train, y_train)
         print("[+] Finished training TPOT Classifier")
+        print("[*] Best pipeline configuration found by TPOT:")
+        print(self.tpot_model.fitted_pipeline_)
+
 
     def train_h2o(self, X_train, y_train):
         """
@@ -58,7 +60,7 @@ class AutoMLClassifier:
         - **Distributed Machine Learning**: Algorithms (e.g., Random Forest, GBM, XGBoost, GLM, Deep Learning) are parallelized and designed for handling rows distributed across machines.
         """
         print("[*] Training H2O AutoML...")
-        h2o.init(verbose=False)
+        h2o.init()
         # Convert to H2OFrame
         h2o_train = h2o.H2OFrame(pd.concat([X_train, y_train], axis=1))
         target = y_train.name
@@ -70,6 +72,10 @@ class AutoMLClassifier:
                                    seed=42, balance_classes=True)
         self.h2o_model.train(x=predictors, y=target, training_frame=h2o_train)
         print("[+] Finished training H2O AutoML")
+        print("[*] Top model leaderboard")
+        print(self.h2o_model.leaderboard)
+        print("[*] Best model leader")
+        print(self.h2o_model.leader)
 
     def predict_tpot(self, X_test):
         if self.tpot_model is None:
