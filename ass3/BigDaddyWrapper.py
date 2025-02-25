@@ -68,7 +68,7 @@ class BigDaddyWrapper:
                 'alpha': [0.00001, 0.0001, 0.001, 0.01, 0.1], 
                 'batch_size': ['auto', 10, 20, 50, 100, 200],
                 'learning_rate': ['constant', 'invscaling', 'adaptive'], 
-                'learning_rate_init': [0.00001, 0.0001, 0.001, 0.01, 0.1],
+                'learning_rate_init': [0.00001, 0.0001, 0.001, 0.01, 0.02],
                 'max_iter': [200, 500, 1000],
                 'shuffle': [True, False], 
                 'early_stopping': [True, False]
